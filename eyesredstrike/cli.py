@@ -92,15 +92,48 @@ def _print_finding(finding: FileFinding) -> None:
     print()
 
 
-def cmd_scan(args: argparse.Namespace) -> int:
-    scanner = Scanner()
-    quarantine_min = args.quarantine if args.quarantine else None
+_SPINNER = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+
+
+def _make_progress_cb(verbose: bool):
+    """Callback de progression pour scanner.scan_path.
+
+    Sans -v : affiche un compteur/spinner qui se met à jour sur place (pas de spam),
+    pour qu'un gros scan silencieux (des dizaines de milliers de fichiers) ne donne
+    jamais l'impression d'un script figé. Avec -v : liste chaque fichier sur stderr.
+    """
+    state = {"count": 0}
+    is_tty = sys.stdout.isatty()
 
     def progress(path: Path) -> None:
-        if args.verbose:
+        state["count"] += 1
+        if verbose:
             print(f"  scanning: {path}", file=sys.stderr)
+        elif is_tty and state["count"] % 15 == 0:
+            spin = _SPINNER[(state["count"] // 15) % len(_SPINNER)]
+            print(f"\r{_D}{spin} Scan en cours... {state['count']} fichiers analysés{_RESET}", end="", flush=True)
 
-    report = scanner.scan_path(Path(args.path).expanduser(), quarantine_min_severity=quarantine_min, progress_cb=progress)
+    progress._state = state  # exposé pour _finish_progress_cb
+    return progress
+
+
+def _finish_progress_cb(progress) -> None:
+    if sys.stdout.isatty() and progress._state["count"] >= 15:
+        print("\r" + " " * 60 + "\r", end="", flush=True)
+
+
+def cmd_scan(args: argparse.Namespace) -> int:
+    target = Path(args.path).expanduser()
+    if not target.exists():
+        print(f"{Fore.RED}Erreur : le chemin '{target}' n'existe pas.{Style.RESET_ALL}", file=sys.stderr)
+        return 1
+
+    scanner = Scanner()
+    quarantine_min = args.quarantine if args.quarantine else None
+    progress = _make_progress_cb(verbose=args.verbose)
+
+    report = scanner.scan_path(target, quarantine_min_severity=quarantine_min, progress_cb=progress)
+    _finish_progress_cb(progress)
 
     print(f"\n{'=' * 60}")
     print(f"Fichiers scannés : {report.scanned_files} | ignorés : {report.skipped_files}")
@@ -192,14 +225,17 @@ def cmd_quarantine_purge(args: argparse.Namespace) -> int:
 
 
 def cmd_clean(args: argparse.Namespace) -> int:
-    scanner = Scanner()
+    target = Path(args.path).expanduser()
+    if not target.exists():
+        print(f"{Fore.RED}Erreur : le chemin '{target}' n'existe pas.{Style.RESET_ALL}", file=sys.stderr)
+        return 1
 
-    def progress(path: Path) -> None:
-        if args.verbose:
-            print(f"  scanning: {path}", file=sys.stderr)
+    scanner = Scanner()
+    progress = _make_progress_cb(verbose=args.verbose)
 
     print(f"{_D}Scan + quarantaine automatique (niveau >= {args.level}) de {args.path}{_RESET}\n")
-    report = scanner.scan_path(Path(args.path).expanduser(), quarantine_min_severity=args.level, progress_cb=progress)
+    report = scanner.scan_path(target, quarantine_min_severity=args.level, progress_cb=progress)
+    _finish_progress_cb(progress)
 
     print(f"\n{'=' * 60}")
     print(f"Fichiers scannés : {report.scanned_files} | ignorés : {report.skipped_files}")
