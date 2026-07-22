@@ -78,16 +78,45 @@ EOF
 chmod +x "$SHIM_PATH"
 ok "Commande installée : $SHIM_PATH"
 
-# --- PATH check -----------------------------------------------------------
+# --- PATH : ajout automatique aux fichiers de config du shell -------------
+PATH_LINE='export PATH="$HOME/.local/bin:$PATH"'
+RC_UPDATED=()
+
+add_path_to_rc() {
+    local rc_file="$1"
+    [ -f "$rc_file" ] || touch "$rc_file"
+    if ! grep -qF "$PATH_LINE" "$rc_file" 2>/dev/null; then
+        {
+            echo ""
+            echo "# Ajouté par l'installateur EyesRedStrike"
+            echo "$PATH_LINE"
+        } >> "$rc_file"
+        RC_UPDATED+=("$rc_file")
+    fi
+}
+
 case ":$PATH:" in
-    *":$BIN_DIR:"*) ;;
+    *":$BIN_DIR:"*) ;;  # déjà dans le PATH de cette session, rien à faire
     *)
-        echo ""
-        echo -e "${RED}⚠  $BIN_DIR n'est pas dans votre PATH.${RESET}"
-        echo "   Ajoutez cette ligne à votre ~/.zshrc ou ~/.bashrc puis rouvrez votre terminal :"
-        echo ""
-        echo -e "   ${BOLD}export PATH=\"\$HOME/.local/bin:\$PATH\"${RESET}"
-        echo ""
+        # On met à jour tous les fichiers de config pertinents (pas seulement celui du
+        # $SHELL courant) : sur macOS, Terminal.app lance un shell de login qui ne lit
+        # que .bash_profile (pas .bashrc), alors que d'autres outils s'attendent à .bashrc.
+        case "$(basename "${SHELL:-}")" in
+            zsh)  add_path_to_rc "$HOME/.zshrc" ;;
+            bash) add_path_to_rc "$HOME/.bash_profile"; add_path_to_rc "$HOME/.bashrc" ;;
+            *)    add_path_to_rc "$HOME/.profile" ;;
+        esac
+
+        # Export immédiat pour que la commande soit utilisable dès la fin de CE script
+        # (ex: si l'utilisateur enchaîne avec `eyesredstrike` dans le même terminal après
+        # un `source <(curl ...)`) — n'affecte pas le shell parent sinon, d'où le rappel.
+        export PATH="$BIN_DIR:$PATH"
+
+        if [ "${#RC_UPDATED[@]}" -gt 0 ]; then
+            echo ""
+            ok "PATH mis à jour automatiquement dans : ${RC_UPDATED[*]}"
+            echo -e "   ${DIM}Ouvrez un nouveau terminal (ou lancez : source ${RC_UPDATED[0]}) pour que ça prenne effet.${RESET}"
+        fi
         ;;
 esac
 
