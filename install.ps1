@@ -64,10 +64,15 @@ Write-Info "Installation des dépendances (yara-python, psutil, colorama, reques
 & $VenvPython -m pip install --quiet -e $AppDir
 
 # --- Wrapper exécutable ----------------------------------------------------
+# On délègue au script console généré par pip (venv/Scripts/eyesredstrike.exe) plutôt
+# qu'à "python -m eyesredstrike" : ce dernier ajoute le répertoire courant (cwd) en
+# tête de sys.path, ce qui peut faire planter l'import si le cwd contient un dossier
+# nommé "eyesredstrike"/"EyesRedStrike" (collision de nom de paquet).
+$VenvEntryPoint = Join-Path $VenvDir "Scripts\eyesredstrike.exe"
 New-Item -ItemType Directory -Force -Path $BinDir | Out-Null
 @"
 @echo off
-"$VenvPython" -m eyesredstrike %*
+"$VenvEntryPoint" %*
 "@ | Set-Content -Path $ShimPath -Encoding ASCII
 
 Write-Ok "Commande installée : $ShimPath"

@@ -65,10 +65,15 @@ pip install --quiet -e "$APP_DIR"
 deactivate
 
 # --- Wrapper exécutable --------------------------------------------------
+# On délègue au script console généré par pip (venv/bin/eyesredstrike) plutôt qu'à
+# "python -m eyesredstrike" : ce dernier ajoute le répertoire courant (cwd) en tête
+# de sys.path, ce qui peut faire planter l'import si le cwd contient un dossier nommé
+# "eyesredstrike"/"EyesRedStrike" (collision de nom de paquet, notamment sur les
+# systèmes de fichiers insensibles à la casse comme APFS/macOS par défaut).
 mkdir -p "$BIN_DIR"
 cat > "$SHIM_PATH" << EOF
 #!/usr/bin/env bash
-exec "$VENV_DIR/bin/python" -m eyesredstrike "\$@"
+exec "$VENV_DIR/bin/eyesredstrike" "\$@"
 EOF
 chmod +x "$SHIM_PATH"
 ok "Commande installée : $SHIM_PATH"
