@@ -1,0 +1,4 @@
+yara-python>=4.5.0
+psutil>=6.0.0
+colorama>=0.4.6
+requests>=2.32.0

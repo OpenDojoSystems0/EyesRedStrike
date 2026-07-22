@@ -1,0 +1,12 @@
+{
+  "_meta": {
+    "format_version": 1,
+    "description": "Base d'IOCs (indicateurs de compromission) par hash SHA-256. Vide par défaut : peuplez-la via 'eyesredstrike update-iocs' (source MalwareBazaar/abuse.ch) ou manuellement à partir de votre propre threat intel / VirusTotal.",
+    "last_updated": null,
+    "sources": [
+      "https://bazaar.abuse.ch/export/ (API publique, gratuite, attribution requise)",
+      "Ajouts manuels vérifiés"
+    ]
+  },
+  "hashes": {}
+}

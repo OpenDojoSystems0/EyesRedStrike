@@ -1,0 +1,28 @@
+# Environnements virtuels
+venv/
+.venv/
+env/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+*.egg
+build/
+dist/
+.eggs/
+
+# Quarantaine locale (jamais versionnée : peut contenir des fichiers malveillants réels)
+.eyesredstrike/
+
+# Éditeurs / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Tests
+.pytest_cache/
+.coverage
+htmlcov/

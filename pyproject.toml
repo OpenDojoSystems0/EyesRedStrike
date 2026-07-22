@@ -1,0 +1,42 @@
+[project]
+name = "eyesredstrike"
+version = "0.1.0"
+description = "Cross-platform malware scanner (Wacatac, trojans, backdoors, ransomware, cryptominers) with reversible quarantine"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Open Dojo Systems" }]
+requires-python = ">=3.9"
+keywords = ["security", "antivirus", "malware", "scanner", "yara", "wacatac", "trojan", "backdoor", "cli"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Security",
+]
+dependencies = [
+    "yara-python>=4.5.0",
+    "psutil>=6.0.0",
+    "colorama>=0.4.6",
+    "requests>=2.32.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/OpenDojoSystems0/EyesRedStrike"
+Repository = "https://github.com/OpenDojoSystems0/EyesRedStrike"
+Issues = "https://github.com/OpenDojoSystems0/EyesRedStrike/issues"
+
+[project.scripts]
+eyesredstrike = "eyesredstrike.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["eyesredstrike", "eyesredstrike.core", "eyesredstrike.platform"]
+
+[tool.setuptools.package-data]
+eyesredstrike = ["data/*.json", "rules/*.yar"]
